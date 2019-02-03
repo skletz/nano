@@ -41,7 +41,7 @@ Three tools are compared between subjects:
 1. DarkLabel -> [Go and have a look on the website](http://darkpgmr.tistory.com/16)
 2. AIBU -> [Go and have a look on GitHub](http://github.com/votchallenge/aibu)
 3. VATIC (used as docker image)
-  * Official cited reposiotry [Go and have a look on GitHub](https://github.com/cvondrick/vatic)
+  * Official cited repository [Go and have a look on GitHub](https://github.com/cvondrick/vatic)
   * Docker contribution [Go and have a look on GitHub](https://github.com/jldowns/vatic-docker-contrib) or [Go and have a look on DockerHub](https://hub.docker.com/r/jldowns/vatic-docker-contrib/)
 
 ![preview tools](/previews/tools/tools_preview.png)
@@ -133,9 +133,9 @@ Scripts for evaluating user study data are implemented in python by utilizing se
 Alternatively, a public available docker image can also be used:
 ```bash
   # Pull the image from Docker Hub
-  docker pull amplejoe/nano:[TAG]
+  docker pull amplejoe/nano:artifacts
   # Run the image
-  docker run -p 4000:80 amplejoe/nano:[TAG]
+  docker run -p 4000:80 amplejoe/nano:artifacts
   # type the following URL in the browser
   # -> localhost:4000
 ```
