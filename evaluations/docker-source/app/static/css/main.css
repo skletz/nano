@@ -1,0 +1,104 @@
+#menu {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background-color: #333;
+}
+#menu li {
+  float: left;
+}
+#menu li a {
+  display: block;
+  color: white;
+  text-align: center;
+  padding: 14px 16px;
+  text-decoration: none;
+}
+#menu li:not(.selected):not(#resetbutton) a:hover{
+  background-color: #111;
+}
+/* #menu .active {
+  background-color: #4CAF50;
+} */
+#menu .selected {
+  background-color: #4CAF50;
+}
+
+.page_title {
+  display: flex;
+  align-items: center;
+}
+.page_title > * {
+  vertical-align: middle;
+  padding: 5px;
+}
+
+#resetbutton {
+}
+#resetbutton a:hover {
+  background-color: #FF4136;
+}
+
+.error {
+  color: red;
+}
+
+.success {
+  color: green;
+}
+
+.result_row {
+  /* display: flex; */
+  height: 100%;
+  /* justify-content:center;
+  align-items: stretch; */
+  /* text-align: center; */
+  max-width: 100%;
+}
+.result_row > * {
+  /* height: 100%; */
+  /* min-width: 0; */
+  /* align-self: center; */
+}
+
+.inline_wrap_group {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.plots {
+  display: flex;
+  flex-wrap: wrap;
+  /* justify-content: center; */
+}
+.plots a {
+  text-decoration:none;
+  color: inherit;
+  opacity: 0.6;
+}
+.plots a:hover {
+  opacity: 1.0;
+}
+.plots fieldset {
+
+}
+.plots fieldset:hover {
+}
+.plots img {
+  display: block;
+  max-width: 100%;
+  max-height: 200px;
+  width: auto;
+  height: auto;
+  margin: 0 auto;
+}
+
+.result_tables {
+   display: flex;
+   flex-wrap: wrap;
+}
+.result_tables table {
+  margin:5px;
+  text-align: right;
+}

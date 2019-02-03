@@ -1,0 +1,3 @@
+#Aibu
+#Thu Sep 13 15:29:36 CEST 2018
+list=images.txt

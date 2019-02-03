@@ -1,0 +1,23 @@
+{% extends "layout.html" %}
+{% block content %}
+  <script type="text/javascript" src="{{ url_for('static', filename='js/iou.js') }}" defer></script>
+  <div class="iou">
+    <h1>Intersection Over Union (IOU)</h1>
+    <button onclick="calcIOU();">calc</button>
+    <span class="user_info"></span>
+    <h3>Results:</h3>
+    <div class="resultsWrapper">
+      {% if files %}
+        {% for f in files %}
+          <div><a href="{{ f }}" target="_blank">{{ f }}</a></div>
+        {% endfor %}
+      {% else %}
+        <p>Press 'calc' to calculate IoUs per user.</p>
+      {% endif %}
+    </div>
+    <h3>Relevant Code:</h3>
+    <div class="rel_code">
+      <a href="https://github.com/skletz/nano/blob/b52ec699771ba66764a5c89bc878ae54910f2f01/evaluations/docker-source/app/calc_iou.py#L104" target="_blank">calc_iou.py:run()</a>
+    </div>
+  </div>
+{% endblock %}

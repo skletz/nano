@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>NANO App</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <script type="text/javascript" src="{{ url_for('static', filename='js/main.js') }}" defer></script>
+  </head>
+  <body>
+    <header>
+      <div class="container">
+        <strong><nav>
+          <ul id="menu">
+            <li><a href="/home">Home</a></li>
+            <li><a href="/iou">Generate IoUs</a></li>
+            <li><a href="/evals">Results</a></li>
+            <li id="resetbutton"><a href="" onclick="clearAll();">Reset</a></li>
+          </ul>
+        </nav></strong>
+      </div>
+    </header>
+    <div class="container">
+      {% block content %}
+      {% endblock %}
+    </div>
+  </body>
+</html>
