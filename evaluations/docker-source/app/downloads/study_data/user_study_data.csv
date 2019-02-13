@@ -1,4 +1,4 @@
-user,gender,age,tool,medical,medical_time,medical_vLike,medical_vEffort,medical_vMotion,gameplay,gameplay_time,gameplay_vLike,gameplay_vEffort,gameplay_vMotion,pedestrian,pedestrian_time,pedestrian_vLike,pedestrian_vEffort,pedestrian_vMotion,tUsage,tBoxCreation,tBoxManipulation,tBoxPropagation
+user,gender,age,tool,medical_iou,medical_time,medical_vLike,medical_vEffort,medical_vMotion,gameplay,gameplay_time,gameplay_vLike,gameplay_vEffort,gameplay_vMotion,pedestrian,pedestrian_time,pedestrian_vLike,pedestrian_vEffort,pedestrian_vMotion,tUsage,tBoxCreation,tBoxManipulation,tBoxPropagation
 1,male,25,VATIC,0.87214336,170,3,3,4,0.460359925,170,4,2,3,0.739952864,180,4,4,2,3,4,4,3
 2,female,30,AIBU,0.867096479,277,3,4,4,0.457795101,180,5,2,3,0.779966155,121,5,1,2,4,4,2,1
 3,female,21,VATIC,0.80661473,120,2,2,4,0.511335525,138,5,3,3,0.657500266,54,5,1,2,4,4,4,3

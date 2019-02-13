@@ -12,7 +12,6 @@ import scipy
 from scipy.stats import shapiro     # shapiro wilk
 # https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.kruskal.html
 from scipy.stats import kruskal     # kruskal wallis (non-parametric n-sample ANOVA alternative )
-# conover-iman
 import scikit_posthocs as sp
 # https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.stats.spearmanr.html
 from scipy.stats import spearmanr # spearmans ranked rank coefficient (non-parametric correlation betw. 2 continuous vars)
@@ -40,7 +39,7 @@ def create_stat(data, type, var, func, path_prefix, file_type):
     stat_df.to_csv(out_var_path, index=False)
     return stat_df
 
-def create_subj_stats(data, quest_group, type, test_func, out_prefix):
+def create_var_stats(data, var_list, type, test_func, out_prefix, force_unique=True, plot_dunn=True):
     out_csv = config.OUT_EVALS_DIR + "/" + out_prefix
     out_png = config.OUT_PLOT_DIR + "/" + out_prefix
 
@@ -51,33 +50,34 @@ def create_subj_stats(data, quest_group, type, test_func, out_prefix):
     statistics_dct = {}
     statistics_idx_col = "var"
     statistics_dct[statistics_idx_col] = []
-    statistics_dct['df'] = []
-    column_names = [statistics_idx_col, 'df'] + stat
+    statistics_dct['n'] = []
+    column_names = [statistics_idx_col, 'n'] + stat
 
-    for var in quest_group:
-        res[var.value] = {}
-        dct = data.to_single_type_dict(type, var.value)
-        lst = data.to_single_type_list(type, var.value)
+    for var in var_list:
+        res[var] = {}
+        dct = data.to_single_type_dict(type, var, force_unique)
+        lst = data.to_single_type_list(type, var, force_unique)
 
         # statistic test
-        res[var.value][stat[0]], res[var.value][stat[1]] = test_func(*lst) # '*' splits list into list of arguments
-        if 'df' not in res[var.value]:
-            res[var.value]['df'] = len(lst[0])
+        res[var][stat[0]], res[var][stat[1]] = test_func(*lst) # '*' splits list into list of arguments
+        if 'n' not in res[var]:
+            res[var]['n'] = len(lst[0])
 
-        statistics_dct[statistics_idx_col].append(var.value)
-        statistics_dct['df'].append(len(lst[0]))
+        statistics_dct[statistics_idx_col].append(var)
+        statistics_dct['n'].append(len(lst[0]))
         for st in stat:
             if st not in statistics_dct:
                 statistics_dct[st] = []
-            val = utils.format_number(res[var.value][st],config.PRINT_PRECISION)
+            val = utils.format_number(res[var][st],config.PRINT_PRECISION)
             statistics_dct[st].append(val)
 
         # dunn
-        frame = pd.DataFrame.from_dict(dct)
-        frame = frame.melt(var_name='groups', value_name='values')
-        res_posthoc = sp.posthoc_dunn(frame, val_col='values', group_col='groups', p_adjust='bonferroni')
-        path = out_png + "heat_" + var.value + "_" + sp.posthoc_dunn.__name__ + "." + config.OUT_PNG_EXT
-        plot_list.append(plots.saveHeatMapPlot(res_posthoc, path))
+        if plot_dunn:
+            frame = pd.DataFrame.from_dict(dct)
+            frame = frame.melt(var_name='groups', value_name='values')
+            res_posthoc = sp.posthoc_dunn(frame, val_col='values', group_col='groups', p_adjust='bonferroni')
+            path = out_png + "heat_" + var + "_" + sp.posthoc_dunn.__name__ + "." + config.OUT_PNG_EXT
+            plot_list.append(plots.saveHeatMapPlot(res_posthoc, path))
 
     # statistics to df
     statistics_df = pd.DataFrame(statistics_dct, columns=column_names)
@@ -94,14 +94,15 @@ def subjective(data):
     out_prefix = func_name + "_"
 
     # Friedmann/Kruskal and Dunn
-    types =  [config.CalcByType.VIDEO, config.CalcByType.TOOL]
+    types = [config.CalcByType.VIDEO, config.CalcByType.TOOL]
     questions = [config.QuestionVideo, config.QuestionTool]
     tests = [friedmanchisquare, kruskal]
 
     plot_list = []
     stat_dict = {}
     for i in range(len(types)):
-        res, plots = create_subj_stats(data, questions[i], types[i], tests[i], out_prefix)
+        q_list = list(map(lambda c: c.value, questions[i]))
+        res, plots = create_var_stats(data, q_list, types[i], tests[i], out_prefix)
         plot_list += plots
         stat_dict[types[i].name] = res
 
@@ -131,22 +132,37 @@ def efficiency(data):
     norm_time_dict["None"] = create_stat(data, None, var, shapiro, out_csv, config.OUT_NORM_FILE)
     plot_list.append(create_plot(data, None, var, plots.saveQQPlot, out_png + "qq"))
 
-    # WELCH
-    out_welch = out_csv + var + "_" + config.OUT_WELCH_FILE + "." + config.OUT_CSV_EXT
+    # ONE WAY ANOVA w repeated measurements
+    out_one_way_anova = out_csv + var + "_" + config.OUT_ONE_WAY_ANOVA_FILE + "." + config.OUT_CSV_EXT
     data_log = data.deep_copy();
     data_log[var] = np.log10(data_log[var])
-    welch_aov = pg.welch_anova(dv=var, data=data_log, between='video')
-    welch_aov.to_csv(out_welch, index=False)
-    # HOWELL
-    out_howell= out_csv + var + "_" + config.OUT_HOWELL_FILE + "." + config.OUT_CSV_EXT
-    games_howell = pg.pairwise_gameshowell(dv=var, between='video', data=data_log, alpha=0.05, tail='two-sided', effsize='hedges')
-    games_howell.to_csv(out_howell, index=False)
+    # Remove outliers
+    q = data_log['time'].quantile(0.96)
+    data_log = data_log[data_log["time"] < q]
+    one_way_anova_aov = pg.rm_anova(dv=var, data=data_log, subject='user', within='video', detailed=True)
+    one_way_anova_aov.to_csv(out_one_way_anova, index=False)
+
+    # Pairwise T-test
+    out_ttest= out_csv + var + "_" + config.OUT_TTEST_FILE + "." + config.OUT_CSV_EXT
+    ttest_result = pg.pairwise_ttests(dv=var, within='video', subject='user', data=data_log, padjust='bonferroni', effsize='hedges', tail='one-sided', return_desc=True)
+    ttest_result.to_csv(out_ttest, index=False)
+
     # MIXED_ANOVA
     out_mixed_anova = out_csv + var + "_" + config.OUT_MIXED_ANOVA_FILE + "." + config.OUT_CSV_EXT
     m_anova = pg.mixed_anova(dv=var, within='video', between='tool', subject='user', data=data.df)
     m_anova.to_csv(out_mixed_anova, index=False)
 
-    return {"success": True, "message": {'norm': str(norm_time_dict), 'welch': str(welch_aov), 'plots': str(plot_list) }}
+    # Friedmann/Kruskal and Dunn
+    types = [config.CalcByType.VIDEO, config.CalcByType.TOOL]
+    tests = [friedmanchisquare, kruskal]
+    pfx = [config.OUT_FRIEDMAN_FILE, config.OUT_KRUSKAL_FILE]
+    stat_dict = {}
+    for i in range(len(types)):
+        res, plt = create_var_stats(data, [var], types[i], tests[i], out_prefix + pfx[i], False)
+        plot_list += plt
+        stat_dict[types[i].name] = res
+
+    return {"success": True, "message": {'norm': str(norm_time_dict), 'stats': str(stat_dict), 'one_way_anova': str(one_way_anova_aov), 'plots': str(plot_list) }}
 
 def effectiveness(data):
     # out paths
@@ -157,50 +173,29 @@ def effectiveness(data):
 
     plot_list = []
     norm_iou_dict = {}
-    kruskal_iou_lst = []
-    conover_iou_dict = {}
     var = "iou"
-    kruskal_idx_col = 'distribution'
     for c in config.CalcByType:
         # box plots
         plot_list.append(create_plot(data, c, var, plots.saveBoxPlot, out_png + "box"))
         # norm + out + plot
         norm_iou_dict[c.name] = create_stat(data, c, var, shapiro, out_csv, config.OUT_NORM_FILE)
         plot_list.append(create_plot(data, c, var, plots.saveQQPlot, out_png + "qq"))
-        # kruskal
-        data_list = data.to_single_type_list(c, var)
-        (stat, p) = kruskal(*data_list) # '*' splits list into argument list
-        krusk = [{kruskal_idx_col: c.name, 'df': len(data_list[0]), 'stat': utils.format_number(stat,config.PRINT_PRECISION), 'p': utils.format_number(p,config.PRINT_PRECISION)}]
-        df_kruskal = pd.DataFrame(krusk, columns=[kruskal_idx_col, 'df', 'stat', 'p'])
-        df_kruskal.set_index(kruskal_idx_col)
-        kruskal_iou_lst.append(df_kruskal)
-        # conover
-        data_dict = data.to_single_type_dict(c, var)
-        statDominanceDf = pd.DataFrame(data_dict)
-        # Columns specified with val_col and group_col args must be melted prior to making comparisons.
-        # https://github.com/maximtrp/scikit-posthocs
-        statDominanceDf = statDominanceDf.melt(var_name='groups', value_name='values')
-        # standard: posthoc_dunn, more precise but less known: posthoc_conover
-        # list: https://www.pydoc.io/pypi/scikit-posthocs-0.3.7/autoapi/_posthocs/index.html#_posthocs.posthoc_dunn
-        # Assumption: non difference in distribution
-        statDominanceResult = sp.posthoc_conover(statDominanceDf, val_col='values', group_col='groups', p_adjust = 'holm')
-        conover_iou_dict[c.name] = statDominanceResult
 
     # var by no calctype
     norm_iou_dict["None"] = create_stat(data, None, var, shapiro, out_csv, config.OUT_NORM_FILE)
     plot_list.append(create_plot(data, None, var, plots.saveQQPlot, out_png + "qq"))
 
-    # kruskal out
-    out_kruskal = out_csv + var + "_" + config.OUT_KRUSKAL_FILE + "." + config.OUT_CSV_EXT
-    kruskal_iou_df = pd.concat(kruskal_iou_lst)
-    kruskal_iou_df.to_csv(out_kruskal, index=False)
+    # Friedmann/Kruskal and Dunn
+    types = [config.CalcByType.VIDEO, config.CalcByType.TOOL]
+    tests = [friedmanchisquare, kruskal]
+    pfx = [config.OUT_FRIEDMAN_FILE, config.OUT_KRUSKAL_FILE]
+    stat_dict = {}
+    for i in range(len(types)):
+        res, plt = create_var_stats(data, [var], types[i], tests[i], out_prefix + pfx[i], False)
+        plot_list += plt
+        stat_dict[types[i].name] = res
 
-    # conover plots
-    for key, value in conover_iou_dict.items():
-        path = out_png + "heat_" + "iou" + "_" + key + "_" + config.OUT_PLOT_FILE + "." + config.OUT_PNG_EXT
-        plot_list.append(plots.saveHeatMapPlot(value, path))
-
-    return {"success": True, "message": {'norm': str(norm_iou_dict), 'kruskal': str(kruskal_iou_df), 'plots': str(plot_list) }}
+    return {"success": True, "message": {'norm': str(norm_iou_dict), 'stats': str(stat_dict), 'plots': str(plot_list) }}
 
 def correlations(data):
     # out paths
@@ -221,7 +216,6 @@ def correlations(data):
         # scatter plots
         if c != config.CalcByType.VIDEO_TOOL:
             plot_list.append(create_plot(data, c, [var_target, var_compare], plots.saveScatterPlot, out_png + "scatter"))
-            # path = out_png + "scatter_" + var_target + "_" + var_compare + "_" + c.name + "_" + config.OUT_PLOT_FILE + "." + config.OUT_PNG_EXT
-            # plot_list.append(plots.saveScatterPlot(data.df, c, var_target, var_compare, path))
+
 
     return {"success": True, "message": {'spear': str(spearman_dict), 'plots': str(plot_list) }}

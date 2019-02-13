@@ -15,13 +15,6 @@ from matplotlib.ticker import FuncFormatter
 sns.set_context("paper", rc={"axes.labelsize":"x-large", "axes.weight":'bold'})
 sns.set_style("whitegrid")
 
-
-def saveHistPlot(data):
-    for v in VIDEO_NAMES:
-        plt.hist(v)
-    plt.savefig(config.OUT_PLOT_DIR + "/hist_" + config.OUT_PLOT_FILE + "." + config.OUT_PNG_EXT)
-    plt.close('all')
-
 def saveScatterPlot(data, calcBy, var_target, var_compare, path):
     # figure size settings
     plt.rcParams['figure.figsize'] = (5, 5)

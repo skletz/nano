@@ -162,13 +162,13 @@ Calculates IoU's per user according to the ground-truth data.
 * Script: ``docker-source/app/calculate.py``
 * Method: ``efficiency()``
 * Input: csv file as pandas dataframe
-* Output: Assessment according to time: Shapiro Wilkinson (normality), Mixed ANOVA, Welch's test and Games-Howell post hoc analysis
+* Output: Assessment according to time: Shapiro Wilkinson (normality), Mixed ANOVA, one way ANOVA (w/ repeated measurements), pairwise t-tests, Kruskal-Wallis H test and Dunn's test
 
 #### Effectiveness (IoU)
 * Script: ``docker-source/app/calculate.py``
 * Method: ``effectiveness()``
 * Input: csv file as pandas dataframe
-* Output: Assessment according to iou: Shapiro Wilkinson (normality), Kruskal-Wallis H test, Conover-Iman test post hoc analysis
+* Output: Assessment according to iou: Shapiro Wilkinson (normality), Kruskal-Wallis H test, Dunn's post hoc analysis
 
 #### Correlations
 * Script: ``docker-source/app/calculate.py``

@@ -20,15 +20,17 @@ class Data:
         res[col] = self.df[col].values
         return res
 
-    def get_unique_df(self, type):
+    def get_unique_df(self, type, var):
         if type == config.CalcByType.VIDEO_TOOL:
-            return self.df.drop_duplicates(subset=['user','tool','video'])
+            return self.df.drop_duplicates(subset=['user', 'tool', 'video'])
         else:
-            return self.df.drop_duplicates(subset=['user', type.name.lower()])
+            return self.df.drop_duplicates(subset=['user', type.name.lower(), var])
 
-    def to_single_type_list(self, type, var):
+    def to_single_type_list(self, type, var, force_unique=True):
         lst = []
-        df_unique = self.get_unique_df(type)
+        df_unique = self.df
+        if force_unique:
+            df_unique = self.get_unique_df(type, var)
 
         if type == config.CalcByType.VIDEO:
             for v in config.Video:
@@ -50,9 +52,11 @@ class Data:
                     lst.append(values)
         return lst
 
-    def to_single_type_dict(self, type, var):
+    def to_single_type_dict(self, type, var, force_unique=True):
         dct = {}
-        df_unique = self.get_unique_df(type)
+        df_unique = self.df
+        if force_unique:
+            df_unique = self.get_unique_df(type, var)
 
         if type == config.CalcByType.VIDEO:
             for v in config.Video:
@@ -74,18 +78,18 @@ class Data:
                     dct[t.value + "_"+ v.value] = values
         return dct
 
-    def calc_single_stat(self, type, var, func, stat = ['p']):
+    def calc_single_stat(self, type, var, func, stat=['p']):
         dct = {}
         idx_col = type.name if type != None else "VAR"
         dct[idx_col] = []
-        df_col = "df"
-        column_names = [idx_col, df_col] + stat # merge with stat list
+        n_col = 'n'
+        column_names = [idx_col, n_col] + stat # merge with stat list
         res = {'p': None, 's': None}
 
         if type == config.CalcByType.VIDEO:
             for v in config.Video:
                 values = self.df[self.df.video==v.value][var].values
-                dct[df_col] = len(values)
+                dct[n_col] = len(values)
                 res['s'], res['p'] = func(values)
                 dct[idx_col].append(v.value)
                 for st in stat:
@@ -96,7 +100,7 @@ class Data:
         if type == config.CalcByType.TOOL:
             for t in config.Tool:
                 values = self.df[self.df.tool==t.value][var].values
-                dct[df_col] = len(values)
+                dct[n_col] = len(values)
                 res['s'], res['p'] = func(values)
                 dct[idx_col].append(t.value)
                 for st in stat:
@@ -115,7 +119,7 @@ class Data:
                     res['s'], res['p'] = func(values)
                     if v.value not in dct:
                         dct[v.value] = []
-                    add_vals = df_col + ": " + str(len(values))
+                    add_vals = n_col + ": " + str(len(values))
                     add_vals += ", " + stat[0] + ": " + str(utils.format_number(res[stat[0]], config.PRINT_PRECISION))
                     if len(stat) > 1:
                         add_vals = add_vals + ", " + stat[1] + ": " + str(utils.format_number(res[stat[1]], config.PRINT_PRECISION))
@@ -127,7 +131,7 @@ class Data:
         # calc stat for var only
         if type == None:
             values = self.df[var]
-            dct[df_col] = len(values)
+            dct[n_col] = len(values)
             res['s'], res['p'] = func(values)
             dct[idx_col].append(var)
             for st in stat:
@@ -146,15 +150,15 @@ class Data:
         dct = {}
         idx_col = type.name if type != None else "VAR"
         dct[idx_col] = []
-        df_col = "df"
-        column_names = [idx_col, df_col] + stat # merge with stat list
+        n_col = 'n'
+        column_names = [idx_col, n_col] + stat # merge with stat list
         res = {'p': None, 'coef': None}
 
         if type == config.CalcByType.VIDEO:
             for v in config.Video:
                 df = self.df[self.df.video==v.value]
                 res['coef'], res['p'] = func(df[var_target].values, df[var_compare].values)
-                dct[df_col] = len(df[var_target].values)
+                dct[n_col] = len(df[var_target].values)
                 dct[idx_col].append(v.value)
                 for st in stat:
                     if st not in dct:
@@ -165,7 +169,7 @@ class Data:
             for t in config.Tool:
                 df = self.df[self.df.tool==t.value]
                 res['coef'], res['p'] = func(df[var_target].values, df[var_compare].values)
-                dct[df_col] = len(df[var_target].values)
+                dct[n_col] = len(df[var_target].values)
                 dct[idx_col].append(t.value)
                 for st in stat:
                     if st not in dct:
@@ -183,7 +187,7 @@ class Data:
                     res['coef'], res['p'] = func(df[var_target].values, df[var_compare].values)
                     if v.value not in dct:
                         dct[v.value] = []
-                    add_vals = df_col + ": " + str(len(df[var_target].values))
+                    add_vals = n_col + ": " + str(len(df[var_target].values))
                     add_vals += ", " + stat[0] + ": " + str(utils.format_number(res[stat[0]], config.PRINT_PRECISION))
                     if len(stat) > 1:
                         add_vals = add_vals + ", " + stat[1] + ": " + str(utils.format_number(res[stat[1]], config.PRINT_PRECISION))
@@ -197,7 +201,7 @@ class Data:
             dct[idx_col].append(var_target)
             res['coef'], res['p'] = func(self.df[var_target].values, self.df[var_compare].values)
             dct[var_compare] = []
-            add_vals = df_col + ": " + str(len(self.df[var_target].values))
+            add_vals = n_col + ": " + str(len(self.df[var_target].values))
             add_vals += ", " + stat[0] + ": " + str(utils.format_number(res[stat[0]], config.PRINT_PRECISION))
             if len(stat) > 1:
                 add_vals = add_vals + ", " + stat[1] + ": " + str(utils.format_number(res[stat[1]], config.PRINT_PRECISION))

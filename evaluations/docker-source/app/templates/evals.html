@@ -9,8 +9,10 @@
       <h1>Evaluations</h1>
     </div>
 
+    Evaluation results according to several statistical tests (note that values < 0.001 are rounded to 0 at utilized precision 3).
+
     <!-- SUBJECTIVE  -->
-    <h3>Subjective Assessment (<code><a href="https://github.com/skletz/nano/blob/b52ec699771ba66764a5c89bc878ae54910f2f01/evaluations/docker-source/app/calculate.py#L91" target="_blank">calculate.py:subjective()</a></code>)</h3>
+    <h3>Subjective Assessment (<code><a href="https://github.com/skletz/nano/blob/00810ebd966979cc82ef0cc30699bbccf472d6b4/evaluations/docker-source/app/calculate.py#L91" target="_blank">calculate.py:subjective()</a></code>)</h3>
     {% if files.subjective or plots.subjective %}
       <h4>Distribution Dominance</h4>
       <p>Distribution dominace of subjective variables according to Friedman Chi Square, Kruskal-Wallis H test and Dunn's posthoc analsyis.</p>
@@ -55,7 +57,7 @@
       {% endif %}
 
     <!-- TIME - EFFICIENCY -->
-    <h3>Efficiency - time (<code><a href="https://github.com/skletz/nano/blob/b52ec699771ba66764a5c89bc878ae54910f2f01/evaluations/docker-source/app/calculate.py#L111" target="_blank">calculate.py:efficiency()</a></code>)</h3>
+    <h3>Efficiency - time (<code><a href="https://github.com/skletz/nano/blob/00810ebd966979cc82ef0cc30699bbccf472d6b4/evaluations/docker-source/app/calculate.py#L112" target="_blank">calculate.py:efficiency()</a></code>)</h3>
     {% if files.efficiency or plots.efficiency %}
       {% if plots.efficiency.box %}
         <h4>Visual Analysis</h4>
@@ -94,9 +96,12 @@
           </fieldset>
         {% endif %}
       </div>
-      {% if files.efficiency.mixed_anova or files.efficiency.welch or files.efficiency.howell %}
+      {% if files.efficiency.mixed_anova or files.efficiency.one_way_anova or files.efficiency.ttest or files.efficiency.friedmanchisquare or files.efficiency.kruskal %}
         <h4>Distribution Dominance</h4>
-        <p>Mixed ANOVA, Welch and Howell tests.</p>
+        <p>
+          Tests for distribution equality/domance according to Mixed ANOVA, one way ANOVA (w/ repeated measurements),
+          pairwise t-tests, Kruskal-Wallis H test and Dunn's test w/ bonferroni correction.
+        </p>
         <div class="result_row">
             <fieldset ><legend>dominance(time)</legend>
               <div class='result_tables'>
@@ -105,16 +110,43 @@
                     {{ f|safe }}
                   {% endfor %}
                 </fieldset>
-                <fieldset><legend>welch(time)</legend>
-                  {% for f in files.efficiency.welch %}
+                <fieldset><legend>one way anova(time)</legend>
+                  {% for f in files.efficiency.one_way_anova %}
                     {{ f|safe }}
                   {% endfor %}
                 </fieldset>
-                <fieldset><legend>howell(time)</legend>
-                  {% for f in files.efficiency.howell %}
+                <fieldset><legend>t-tests(time)</legend>
+                  {% for f in files.efficiency.ttest %}
                     {{ f|safe }}
                   {% endfor %}
                 </fieldset>
+                {% if files.efficiency.kruskal %}
+                <fieldset><legend>kruskal(tool)</legend>
+                  <div class='result_tables'>
+                      {% for f in files.efficiency.kruskal %}
+                        {{ f|safe }}
+                      {% endfor %}
+                  </div>
+                </fieldset>
+                {% endif %}
+                {% if files.efficiency.friedmanchisquare %}
+                <fieldset><legend>friedmanchisquare(video)</legend>
+                  <div class='result_tables'>
+                      {% for f in files.efficiency.friedmanchisquare %}
+                        {{ f|safe }}
+                      {% endfor %}
+                  </div>
+                </fieldset>
+                {% endif %}
+                {% if plots.efficiency.heat %}
+                  <fieldset><legend>dunn-heatmaps(time)</legend>
+                    <div class='plots'>
+                        {% for p in plots.efficiency.heat %}
+                          <a href="{{ p }}" target="_blank"><fieldset><legend>{{ p }}</legend><img src="{{ p }}"></fieldset></a>
+                        {% endfor %}
+                    </div>
+                  </fieldset>
+                {% endif %}
               </div>
             </fieldset>
       </div>
@@ -125,7 +157,7 @@
     {% endif %}
 
     <!-- IOU - effectiveness -->
-    <h3>Effectiveness - iou (<code><a href="https://github.com/skletz/nano/blob/b52ec699771ba66764a5c89bc878ae54910f2f01/evaluations/docker-source/app/calculate.py#L151" target="_blank">calculate.py:effectiveness()</a></code>)</h3>
+    <h3>Effectiveness - iou (<code><a href="https://github.com/skletz/nano/blob/00810ebd966979cc82ef0cc30699bbccf472d6b4/evaluations/docker-source/app/calculate.py#L167" target="_blank">calculate.py:effectiveness()</a></code>)</h3>
     {% if files.effectiveness or plots.effectiveness %}
       {% if plots.effectiveness.box %}
         <h4>Visual Analysis</h4>
@@ -164,15 +196,15 @@
           </fieldset>
         {% endif %}
       </div>
-      {% if files.effectiveness.kruskal or plots.effectiveness.heat %}
+      {% if files.effectiveness.kruskal or plots.effectiveness.heat or files.effectiveness.friedmanchisquare %}
         <h4>Distribution Dominance</h4>
-        <p>Tests for distribution equality/domance according to non-parametric Kruskal-Wallis H test and Conover-Iman test (note that values < 0.001 are rounded to 0 at precision 3).</p>
+        <p>Tests for distribution equality/domance according to non-parametric Kruskal-Wallis H test and Dunn's test w/ bonferroni correction.</p>
       {% endif %}
       <div class="result_row">
         <fieldset><legend>dominance(iou)</legend>
           <div class="inline_wrap_group">
             {% if files.effectiveness.kruskal %}
-            <fieldset><legend>kruskal(iou)</legend>
+            <fieldset><legend>kruskal(tool)</legend>
               <div class='result_tables'>
                   {% for f in files.effectiveness.kruskal %}
                     {{ f|safe }}
@@ -180,8 +212,17 @@
               </div>
             </fieldset>
             {% endif %}
+            {% if files.effectiveness.friedmanchisquare %}
+            <fieldset><legend>friedmanchisquare(video)</legend>
+              <div class='result_tables'>
+                  {% for f in files.effectiveness.friedmanchisquare %}
+                    {{ f|safe }}
+                  {% endfor %}
+              </div>
+            </fieldset>
+            {% endif %}
             {% if plots.effectiveness.heat %}
-              <fieldset><legend>conover-iman-heatmaps(iou)</legend>
+              <fieldset><legend>dunn-heatmaps(iou)</legend>
                 <div class='plots'>
                     {% for p in plots.effectiveness.heat %}
                       <a href="{{ p }}" target="_blank"><fieldset><legend>{{ p }}</legend><img src="{{ p }}"></fieldset></a>
@@ -198,7 +239,7 @@
     {% endif %}
 
     <!-- Correlations -->
-    <h3>Correlations (<code><a href="https://github.com/skletz/nano/blob/b52ec699771ba66764a5c89bc878ae54910f2f01/evaluations/docker-source/app/calculate.py#L205" target="_blank">calculate.py:correlations()</a></code>)</h3>
+    <h3>Correlations (<code><a href="https://github.com/skletz/nano/blob/00810ebd966979cc82ef0cc30699bbccf472d6b4/evaluations/docker-source/app/calculate.py#L200" target="_blank">calculate.py:correlations()</a></code>)</h3>
     {% if files.correlations or plots.correlations %}
       {% if plots.correlations.scatter %}
         <h4>Visual Analysis</h4>
