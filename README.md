@@ -2,6 +2,8 @@
 
 A repository to supplement the paper "A Comparative Study of Video Annotation Tools for Scene Understanding: Yet (not) another Annotation Tool": https://doi.org/10.1145/3304109.3306223
 
+Artifacts: [![DOI](https://zenodo.org/badge/168969167.svg)](https://zenodo.org/badge/latestdoi/168969167)
+
 ```bash
 nano
 +-- acquired_data
